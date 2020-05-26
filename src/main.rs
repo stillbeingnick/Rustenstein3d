@@ -8,69 +8,20 @@ const D_HEIGHT: usize = 100;
 fn main() {
 
     let mut buffer: Vec<u32> = vec![0; D_WIDTH * D_HEIGHT];
-
-
-    let mut window = Window::new(
-        "Test - ESC to exit",
-        D_WIDTH,
-        D_HEIGHT,
-        WindowOptions{
-            resize: true,
-            scale: Scale::X8,
-            ..WindowOptions::default()
-        },
-    )
-    .unwrap_or_else(|e| {
-        panic!("{}", e);
-    });
-
-    // let mut my_buff: Vec<u32> = vec![0; D_WIDTH * D_HEIGHT];
-
     
 
-
-
-    // Limit to max ~60 fps update rate
-    window.limit_update_rate(Some(std::time::Duration::from_micros(16600)));
-
-    while window.is_open() && !window.is_key_down(Key::Escape) {
-        //loop for the window
-        let frame_time = SystemTime::from_inner(SystemTime::now());
-        for xi in 0..D_WIDTH * D_HEIGHT{
-            if frame_time % 2 == 0 {
-                if xi % 2 == 0 {
-                    buffer[xi] = 100;
-                }else{
-                    buffer[xi] = 255;
-                }
-            }else{
-                if xi % 2 == 0 {
-                    buffer[xi] = 255;
-                }else{
-                    buffer[xi] = 100;
-                }
-            }
-        }
-
-
-        // We unwrap here as we want this code to exit if it fails. Real applications may want to handle this in a different way
-        window
-            .update_with_buffer(&buffer, D_WIDTH, D_HEIGHT)
-            .unwrap();
-    }
-
-    
-
-    let mut map: Vec<Vec<&str>> = vec![vec![]];
-    map.push("##########".split("").collect());
-    map.push("#........#".split("").collect());
-    map.push("#........#".split("").collect());
-    map.push("#........#".split("").collect());
-    map.push("#........#".split("").collect());
-    map.push("#........#".split("").collect());
-    map.push("#........#".split("").collect());
-    map.push("#........#".split("").collect());
-    map.push("##########".split("").collect());
+    let map: Vec<Vec<&str>> = vec![
+    vec!["#","#","#","#","#","#","#","#","#","#"],
+    vec!["#",".",".",".",".",".",".",".",".","#"],
+    vec!["#",".",".",".",".",".",".",".",".","#"],
+    vec!["#",".",".",".",".",".",".",".",".","#"],
+    vec!["#",".",".",".",".",".",".",".",".","#"],
+    vec!["#",".",".",".",".",".",".",".",".","#"],
+    vec!["#",".",".",".",".",".",".",".",".","#"],
+    vec!["#",".",".",".",".",".",".",".",".","#"],
+    vec!["#",".",".",".",".",".",".",".",".","#"],
+    vec!["#","#","#","#","#","#","#","#","#","#"],
+    ];
     
     // let mut fake_display = vec![
     //     vec![0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
@@ -147,8 +98,8 @@ fn main() {
     }
 
     let mut player = Player{
-        x: 10.0,
-        y: 10.0,
+        x: 5.0,
+        y: 5.0,
         dir: PosVec{
             x: 0.0,
             y: 1.0
@@ -181,28 +132,81 @@ fn main() {
         rays.push(ray);
     }
 
-    //testing the ray casting
-    // for j in 0..10 {
-    //     player.x += 1.0;
-    
-    //     for x in 0..rays.len() {
-    //         let ray = &rays[x];
-    //         let mut current_point = [player.x, player.y];
-    //         for i in 0..500{
-    //             current_point = [current_point[0] + ray.dirX, current_point[1] + ray.dirY];
-    //             if current_point[0] <= 20.0 && current_point[1] <= 20.0 && current_point[0] > 0.0 && current_point[1] > 0.0 {
-    //                 // println!("{:?}",current_point);
-    //                 // fake_display[current_point[1] as usize][current_point[0] as usize] = 1;
-    //             }else{
-    //                 break;
-    //             }
+    let mut window = Window::new(
+        "Test - ESC to exit",
+        D_WIDTH,
+        D_HEIGHT,
+        WindowOptions{
+            resize: true,
+            scale: Scale::X8,
+            ..WindowOptions::default()
+        },
+    )
+    .unwrap_or_else(|e| {
+        panic!("{}", e);
+    });
 
-    //         }
-    //     }
-    //     for x in 0..fake_display.len() {
-    //         // println!("{:?}", fake_display[x as usize])
-    //     }
-    // }
+    // let mut my_buff: Vec<u32> = vec![0; D_WIDTH * D_HEIGHT];
+
+    
+
+
+
+    // Limit to max ~60 fps update rate
+    window.limit_update_rate(Some(std::time::Duration::from_micros(16600)));
+
+    let mut odd_even = 0;
+
+    while window.is_open() && !window.is_key_down(Key::Escape) {
+
+        buffer = vec![0; D_WIDTH * D_HEIGHT];
+
+        if window.is_key_down(Key::W) && player.y > 0.0 && player.y < (D_WIDTH*D_HEIGHT) as f32{
+            player.y += 0.1;
+        }else if window.is_key_down(Key::S) && player.y > 0.0 && player.y < (D_WIDTH*D_HEIGHT) as f32{
+            player.y -= 0.1;
+        }
+
+        // let player_buff = ((player.y*D_WIDTH as f32) + player.x) as u32;
+        // buffer[player_buff as usize] = 100;
+        for x in 0..rays.len() {
+            let ray = &rays[x];
+            let mut current_point = [player.y, player.x];
+            
+
+            for i in 0..100{
+                current_point = [current_point[0] + ray.dirY, current_point[1] + ray.dirX];
+
+                // let buffer_point = (((current_point[0]*D_WIDTH as f32) + current_point[1]).round()) as u32;
+                // if buffer_point < (D_HEIGHT*D_WIDTH) as u32{
+                //     buffer[buffer_point as usize] = 255255255;
+                // }
+                // println!("{:?}", map[0]);
+                if (current_point[1] as usize) < map[0].len()
+                    && (current_point[0] as usize) < map.len() {
+
+                        // print!("{}", map[current_point[0] as usize][current_point[1] as usize]);
+
+                }
+                else{
+                    break;
+                }
+                if map[current_point[0] as usize][current_point[1] as usize] == "#"{
+                        // println!{"HIT!"};
+                        buffer[50*D_HEIGHT + (current_point[1]*50.0)as usize] = 255;
+                }
+                
+                
+
+            }
+        }
+        
+
+        // We unwrap here as we want this code to exit if it fails. Real applications may want to handle this in a different way
+        window
+            .update_with_buffer(&buffer, D_WIDTH, D_HEIGHT)
+            .unwrap();
+    }
 
 
 }
