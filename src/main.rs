@@ -81,19 +81,23 @@ fn main() {
     // Limit to max ~60 fps update rate
     window.limit_update_rate(Some(std::time::Duration::from_micros(16600)));
 
-    let mut odd_even = 0;
 
     while window.is_open() && !window.is_key_down(Key::Escape) {
 
         buffer = vec![0; D_WIDTH * D_HEIGHT];
 
-        if window.is_key_down(Key::W) && player.y < map.len() as f32{
-            if map[player.y as usize][player.x as usize] != "" {play};
+        if window.is_key_down(Key::W) {
+            if map[player.y as usize][player.x as usize] != "" {player.y += 0.1};
         }
         if window.is_key_down(Key::S) && player.y > 0.0 {
-            player.y -= 0.1;
+            if map[player.y as usize][player.x as usize] != "" {player.y -= 0.1};
         }
-        if window.is_key_down(Key::A) {}
+        if window.is_key_down(Key::A) {
+            if map[player.y as usize][player.x as usize] != "" {player.x += 0.1};
+        }
+        if window.is_key_down(Key::D) {
+            if map[player.y as usize][player.x as usize] != "" {player.x -= 0.1};
+        }
 
         // println!("{:?}", player);
 
@@ -112,8 +116,8 @@ fn main() {
                 current_point.x += ray.dir_x;
                 current_point.y += 0.1;
 
-                if current_point.x < map[0].len() as f32 
-                && current_point.y < map.len() as f32 
+                if current_point.x < (D_HEIGHT*D_WIDTH) as f32 
+                && current_point.y < (D_HEIGHT*D_WIDTH) as f32 
                 && current_point.x > -1.0
                 && current_point.y > -1.0
                 {
@@ -124,22 +128,25 @@ fn main() {
                         let mut start_pixel = -line_height as i32/2 + D_HEIGHT as i32 /2;
                         for j in 0..line_height as u32 {
                             
-                            if(start_pixel < 0){
+                            if start_pixel < 0 {
                                 start_pixel = 0;
                             }
 
-                            let pixel_to_draw = ((start_pixel+j as i32) as usize * D_WIDTH) + x;
+                            let pixel_to_draw = x * D_WIDTH + (start_pixel+j as i32) as usize;
                             // println!("{}",pixel_to_draw);
                             if pixel_to_draw > 0 && pixel_to_draw < D_HEIGHT*D_WIDTH {
-                                buffer[pixel_to_draw] = 255;
+                                buffer[pixel_to_draw] = 255255255/distance as u32 + 10 ;
                             }
-                            // println!("{}",j)
+                            //  println!("{}",pixel_to_draw);
                         }
 
                         // wall_hit = true;
                         // buffer[(50*D_WIDTH) + x as usize] = 255;
                         // println!("{:?}", vec![current_point.x-player.x, current_point.y-player.y]);
-                    }
+                        break;
+                    // println!("{:?}", current_point);
+                    // buffer[(current_point.x as usize*D_WIDTH) + current_point.y as usize] = 255255255;
+                    //}
                 }else{
                     break;
                 }
@@ -152,6 +159,7 @@ fn main() {
             .update_with_buffer(&buffer, D_WIDTH, D_HEIGHT)
             .unwrap();
     }
+}
 
 
 }
