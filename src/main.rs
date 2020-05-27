@@ -36,7 +36,7 @@ fn main() {
         dir_x: f32,
         dir_y: f32
     }
-
+    #[derive(Debug)]
     struct Player {
         x: f32,
         y: f32,
@@ -88,11 +88,14 @@ fn main() {
         buffer = vec![0; D_WIDTH * D_HEIGHT];
 
         if window.is_key_down(Key::W) && player.y < map.len() as f32{
-            player.y += 0.1;
+            if map[player.y as usize][player.x as usize] != "" {play};
         }
-        if window.is_key_down(Key::W) && player.y > 0.0{
+        if window.is_key_down(Key::S) && player.y > 0.0 {
             player.y -= 0.1;
         }
+        if window.is_key_down(Key::A) {}
+
+        // println!("{:?}", player);
 
         for x in 0..D_WIDTH{
             let cam_x = 2.0*x as f32/D_WIDTH as f32-1.0;
@@ -105,15 +108,37 @@ fn main() {
                 x: player.x,
                 y: player.y
             };
-            // println!("scanline: {} {:?} {}", x, ray, cam_x);
             loop {
                 current_point.x += ray.dir_x;
-                current_point.y += 1.0;
-                if current_point.x < map[0].len() as f32 && current_point.y < map.len() as f32{
+                current_point.y += 0.1;
+
+                if current_point.x < map[0].len() as f32 
+                && current_point.y < map.len() as f32 
+                && current_point.x > -1.0
+                && current_point.y > -1.0
+                {
                     if map[current_point.x as usize][current_point.y as usize] == "#"{
-                        wall_hit = true;
-                        buffer[(50*D_WIDTH) + x as usize] = 255;
-                        println!("{:?}", vec![current_point.x-player.x, current_point.y-player.y]);
+
+                        let distance = (current_point.x-player.x + current_point.y-player.y).abs();
+                        let line_height = D_HEIGHT as f32/distance;
+                        let mut start_pixel = -line_height as i32/2 + D_HEIGHT as i32 /2;
+                        for j in 0..line_height as u32 {
+                            
+                            if(start_pixel < 0){
+                                start_pixel = 0;
+                            }
+
+                            let pixel_to_draw = ((start_pixel+j as i32) as usize * D_WIDTH) + x;
+                            // println!("{}",pixel_to_draw);
+                            if pixel_to_draw > 0 && pixel_to_draw < D_HEIGHT*D_WIDTH {
+                                buffer[pixel_to_draw] = 255;
+                            }
+                            // println!("{}",j)
+                        }
+
+                        // wall_hit = true;
+                        // buffer[(50*D_WIDTH) + x as usize] = 255;
+                        // println!("{:?}", vec![current_point.x-player.x, current_point.y-player.y]);
                     }
                 }else{
                     break;
