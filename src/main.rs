@@ -72,11 +72,11 @@ fn main() {
 
     let mut left_fov = FloatVec {
         x : player.x - 50.0,
-        y : player.y + 50.0
+        y : player.y - 50.0
     };
     let mut right_fov = FloatVec {
         x : player.x + 50.0,
-        y : player.y + 50.0,
+        y : player.y - 50.0,
     };
     let fov_plane_length = ((right_fov.x - left_fov.x) + (right_fov.y-left_fov.y)).sqrt();
 
@@ -145,15 +145,15 @@ fn main() {
             };
             // println!("{:?}", left_fov);
         }
-
-        let m = (right_fov.y-left_fov.y).abs()/(right_fov.x-left_fov.x).abs();
-        // println!("{}", m);
+        let m = (right_fov.y-left_fov.y)/(right_fov.x-left_fov.x);
+        let b = left_fov.y - (m*left_fov.x);
+        println!("{}", b);
         for x in 0..D_WIDTH{
-            let cam_x = ((fov_plane_length/D_WIDTH as f32)*x as f32) - fov_plane_length/2.0;
+            let cam_x = ((fov_plane_length/D_WIDTH as f32)*x as f32);
             
             let ray = FloatVec{
                 x : left_fov.x + cam_x,
-                y : m*cam_x+left_fov.y
+                y : m*(left_fov.x+cam_x) + b
             };
         //     let mut current_point = FloatVec {
         //         x: player.x,
@@ -164,7 +164,10 @@ fn main() {
         //         current_point.y += ray.y;
         //         buffer[(current_point.y as usize *D_WIDTH)+current_point.x as usize] = 255;
         //     }
+        if ray.x as usize <= D_WIDTH-1 && ray.y as usize <= D_HEIGHT-1
+            && ray.x > -0.0_f32 && ray.x > -0.0_f32 {
             buffer[(ray.y as usize *D_WIDTH)+ray.x as usize] = 255;
+        }
 
             println!("{} {} {:?}",m,cam_x, ray);
         }
