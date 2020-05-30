@@ -43,8 +43,8 @@ fn main() {
         dir: FloatVec
     }
     let mut player = Player{
-        x: 50.0,
-        y: 50.0,
+        x: 320.0,
+        y: 320.0,
         dir: FloatVec{
             x: 1.0,
             y: 0.0
@@ -71,12 +71,12 @@ fn main() {
     window.limit_update_rate(Some(std::time::Duration::from_micros(16600)));
 
     let mut left_fov = FloatVec {
-        x : player.dir.x - 50.0,
-        y : player.dir.y + 50.0
+        x : player.x - 50.0,
+        y : player.y + 50.0
     };
     let mut right_fov = FloatVec {
-        x : player.dir.x + 50.0,
-        y : player.dir.y + 50.0,
+        x : player.x + 50.0,
+        y : player.y + 50.0,
     };
     let fov_plane_length = ((right_fov.x - left_fov.x) + (right_fov.y-left_fov.y)).sqrt();
 
@@ -102,29 +102,59 @@ fn main() {
          if window.is_key_down(Key::Right){
             // player.dir.x += 0.1;
             // player.dir.y += 0.1;
-
-            let old_left = left_fov;
-
-            left_fov = FloatVec {
-                x : (&old_left.x*(0.1_f32.cos()) - &old_left.y *(0.1_f32.sin())),
-                y : (&old_left.y*(0.1_f32.cos()) + &old_left.x *(0.1_f32.sin())),
+            
+            let origin_left = FloatVec {
+                x: left_fov.x - player.x,
+                y: left_fov.y - player.y
             };
-
-            println!("{:?}", left_fov);
-            // right_fov = FloatVec {
-            //     x : (&right_fov.x.cos() - &right_fov.y * 1.0_f32.sin()).abs(),
-            //     y : (&right_fov.y.cos() - &right_fov.x * 1.0_f32.sin()).abs(),
-            // };
+            let rad:f32 = 0.1; 
+            let sin = rad.sin();
+            let cos = rad.cos();
+            // let new_x = (origin_left.x*cos - origin_left.y*sin)+player.x;
+            // let new_y = (origin_left.x*sin + origin_left.y*cos)+player.y;
+            left_fov = FloatVec {
+                x : ((left_fov.x - player.x)*cos - (left_fov.y - player.y)*sin)+player.x,
+                y : ((left_fov.x - player.x)*sin + (left_fov.y - player.y)*cos)+player.y
+            };
+            right_fov = FloatVec {
+                x : ((right_fov.x - player.x)*cos - (right_fov.y - player.y)*sin)+player.x,
+                y : ((right_fov.x - player.x)*sin + (right_fov.y - player.y)*cos)+player.y
+            };
+            // println!("{:?}", left_fov);
+        }
+        if window.is_key_down(Key::Left){
+            // player.dir.x += 0.1;
+            // player.dir.y += 0.1;
+            
+            let origin_left = FloatVec {
+                x: left_fov.x - player.x,
+                y: left_fov.y - player.y
+            };
+            let rad:f32 = -0.1; 
+            let sin = rad.sin();
+            let cos = rad.cos();
+            // let new_x = (origin_left.x*cos - origin_left.y*sin)+player.x;
+            // let new_y = (origin_left.x*sin + origin_left.y*cos)+player.y;
+            left_fov = FloatVec {
+                x : ((left_fov.x - player.x)*cos - (left_fov.y - player.y)*sin)+player.x,
+                y : ((left_fov.x - player.x)*sin + (left_fov.y - player.y)*cos)+player.y
+            };
+            right_fov = FloatVec {
+                x : ((right_fov.x - player.x)*cos - (right_fov.y - player.y)*sin)+player.x,
+                y : ((right_fov.x - player.x)*sin + (right_fov.y - player.y)*cos)+player.y
+            };
+            // println!("{:?}", left_fov);
         }
 
-
-        // for x in 0..D_WIDTH{
-        //     let cam_x = ((fov_plane_length/D_WIDTH as f32)*x as f32) - fov_plane_length/2.0;
-        //     let m = (right_fov.y-left_fov.y)/(right_fov.x-left_fov.y);
-        //     let ray = FloatVec{
-        //         x : left_fov.x + cam_x,
-        //         y : left_fov.y
-        //     };
+        let m = (right_fov.y-left_fov.y).abs()/(right_fov.x-left_fov.x).abs();
+        // println!("{}", m);
+        for x in 0..D_WIDTH{
+            let cam_x = ((fov_plane_length/D_WIDTH as f32)*x as f32) - fov_plane_length/2.0;
+            
+            let ray = FloatVec{
+                x : left_fov.x + cam_x,
+                y : m*cam_x+left_fov.y
+            };
         //     let mut current_point = FloatVec {
         //         x: player.x,
         //         y: player.y
@@ -132,13 +162,20 @@ fn main() {
         //     for i in 0..10{
         //         current_point.x += ray.x;
         //         current_point.y += ray.y;
-                // buffer[((current_point.y*D_WIDTH as f32)+current_point.x).abs() as usize] = 255;
+        //         buffer[(current_point.y as usize *D_WIDTH)+current_point.x as usize] = 255;
         //     }
-            // println!("{}", cam_x);
+            buffer[(ray.y as usize *D_WIDTH)+ray.x as usize] = 255;
+
+            println!("{} {} {:?}",m,cam_x, ray);
+        }
+        
+   
+
+
 
             
-        buffer[(((left_fov.y+player.y)*D_WIDTH as f32)+(left_fov.x+player.x)).abs() as usize] = 255;
-        buffer[(((right_fov.y+player.y)*D_WIDTH as f32)+right_fov.x+player.x).abs() as usize] = 255;
+        buffer[(left_fov.y as usize * D_WIDTH)+left_fov.x as usize] = 255;
+        buffer[(right_fov.y as usize * D_WIDTH)+right_fov.x as usize] = 255;
         buffer[((player.y*D_WIDTH as f32)+player.x).abs() as usize] = 255;
 
             
