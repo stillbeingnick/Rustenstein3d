@@ -43,8 +43,8 @@ fn main() {
         dir: FloatVec
     }
     let mut player = Player{
-        x: 320.0,
-        y: 320.0,
+        x: 5.0,
+        y: 5.0,
         dir: FloatVec{
             x: 1.0,
             y: 0.0
@@ -71,34 +71,44 @@ fn main() {
     window.limit_update_rate(Some(std::time::Duration::from_micros(16600)));
 
     let mut left_fov = FloatVec {
-        x : player.x - 50.0,
-        y : player.y - 50.0
+        x : player.x - 1.0,
+        y : player.y - 1.0
     };
     let mut right_fov = FloatVec {
-        x : player.x + 50.0,
-        y : player.y - 50.0,
+        x : player.x + 1.0,
+        y : player.y - 1.0,
     };
-    let fov_plane_length = ((right_fov.x - left_fov.x) + (right_fov.y-left_fov.y)).sqrt();
+    let fov_plane_length = ((right_fov.x - left_fov.x).powf(2.0) + (right_fov.y-left_fov.y).powf(2.0)).sqrt();
 
     println!("{}",fov_plane_length);
 
 
     let mut frame_time = 0.0;
 
+    let start_rad = 1.0;
+    let mut current_rad = start_rad;
+
     while window.is_open() && !window.is_key_down(Key::Escape) {
 
         // let frame_start = SystemTime::now();
+        
+        
 
         buffer = vec![0; D_WIDTH * D_HEIGHT];
+        
 
         // let rot_speed: f32 = frame_time*-0.5;
         // let move_speed: f32 = frame_time*0.10;
 
 
         if window.is_key_down(Key::W) {
-           player.x += 0.0;
-           player.y += 1.0;
+           player.x += player.dir.y*0.1;
+           player.y += player.dir.y*0.1;
         }
+        if window.is_key_down(Key::S) {
+            player.x -= player.dir.x*0.1;
+            player.y -= player.dir.y*0.1;
+         }
          if window.is_key_down(Key::Right){
             // player.dir.x += 0.1;
             // player.dir.y += 0.1;
@@ -108,10 +118,19 @@ fn main() {
                 y: left_fov.y - player.y
             };
             let rad:f32 = 0.1; 
+            if current_rad > 6.28319 + start_rad {
+                current_rad = start_rad;
+            }else{
+                current_rad += rad;
+            }
+            
             let sin = rad.sin();
             let cos = rad.cos();
             // let new_x = (origin_left.x*cos - origin_left.y*sin)+player.x;
             // let new_y = (origin_left.x*sin + origin_left.y*cos)+player.y;
+            let old_player = player;
+            player.dir.x = ((old_player.dir.x - 0.0)*cos + (old_player.dir.y - 0.0)*sin)+0.0;
+            player.dir.y = ((old_player.dir.x - 0.0)*sin - (old_player.dir.y - 0.0)*cos)+0.0;
             left_fov = FloatVec {
                 x : ((left_fov.x - player.x)*cos - (left_fov.y - player.y)*sin)+player.x,
                 y : ((left_fov.x - player.x)*sin + (left_fov.y - player.y)*cos)+player.y
@@ -123,16 +142,19 @@ fn main() {
             // println!("{:?}", left_fov);
         }
         if window.is_key_down(Key::Left){
-            // player.dir.x += 0.1;
-            // player.dir.y += 0.1;
             
-            let origin_left = FloatVec {
-                x: left_fov.x - player.x,
-                y: left_fov.y - player.y
-            };
-            let rad:f32 = -0.1; 
+            
+            let rad:f32 = -0.1;
+            if current_rad < -6.28319 + start_rad {
+                current_rad = start_rad;
+            }else{
+                current_rad += rad;
+            } 
             let sin = rad.sin();
             let cos = rad.cos();
+            let old_player = player;
+            player.dir.x = ((old_player.dir.x - 0.0)*cos - (old_player.dir.y - 0.0)*sin)+0.0;
+            player.dir.y = ((old_player.dir.x - 0.0)*sin + (old_player.dir.y - 0.0)*cos)+0.0;
             // let new_x = (origin_left.x*cos - origin_left.y*sin)+player.x;
             // let new_y = (origin_left.x*sin + origin_left.y*cos)+player.y;
             left_fov = FloatVec {
@@ -145,42 +167,59 @@ fn main() {
             };
             // println!("{:?}", left_fov);
         }
-        let m = (right_fov.y-left_fov.y)/(right_fov.x-left_fov.x);
-        let b = left_fov.y - (m*left_fov.x);
-        println!("{}", b);
-        for x in 0..D_WIDTH{
-            let cam_x = ((fov_plane_length/D_WIDTH as f32)*x as f32);
-            
-            let ray = FloatVec{
-                x : left_fov.x + cam_x,
-                y : m*(left_fov.x+cam_x) + b
-            };
-        //     let mut current_point = FloatVec {
-        //         x: player.x,
-        //         y: player.y
-        //     };
-        //     for i in 0..10{
-        //         current_point.x += ray.x;
-        //         current_point.y += ray.y;
-        //         buffer[(current_point.y as usize *D_WIDTH)+current_point.x as usize] = 255;
-        //     }
-        if ray.x as usize <= D_WIDTH-1 && ray.y as usize <= D_HEIGHT-1
-            && ray.x > -0.0_f32 && ray.x > -0.0_f32 {
-            buffer[(ray.y as usize *D_WIDTH)+ray.x as usize] = 255;
-        }
 
-            println!("{} {} {:?}",m,cam_x, ray);
-        }
+        let fov_step_rad = (fov/D_WIDTH as f32)*PI/180.0;
         
-   
+        let mut loop_rad = current_rad;
+        for x in 0..D_WIDTH{ 
+            
+            let mut step_size = 0.0;
+
+            loop_rad += fov_step_rad;
+
+            let ray = Ray{
+                dir_x: loop_rad.sin(),
+                dir_y: loop_rad.cos()
+            };
+            let mut hit = false;
+            // println!("{}"  , current_rad);
+            let mut current_point = FloatVec {
+                x: player.x,
+                y: player.y
+            };
+            while !hit {
+                step_size += 0.1;
+               
+                current_point.x = player.x + ray.dir_x*step_size;
+                current_point.y = player.y +ray.dir_y*step_size;
+                if map[current_point.y as usize][current_point.x as usize] == "#" {hit = true}
+                
+            }
+
+            if hit == true {
+                let distance = (current_point.x - player.x).abs() + (current_point.y - player.y).abs();
+                let line_height = (D_HEIGHT as f32/(distance+1.0)) as i32;
+                let start_pixel = -(line_height as i32)/2 + D_HEIGHT as i32/2;
+                for j in 0..line_height as usize {
+                    let pixel_to_draw = (start_pixel as usize + j) * D_WIDTH + x;
+                    buffer[pixel_to_draw] = 255;
+                }
+                if line_height > 0 {
+                    // println!("{} {}",start_pixel, distance)
+                }
+            }
+
+         
+        }
+
+        
+        
+        println!("{:?}", player.dir);
 
 
 
             
-        buffer[(left_fov.y as usize * D_WIDTH)+left_fov.x as usize] = 255;
-        buffer[(right_fov.y as usize * D_WIDTH)+right_fov.x as usize] = 255;
-        buffer[((player.y*D_WIDTH as f32)+player.x).abs() as usize] = 255;
-
+        
             
         //     while !hit {
 
