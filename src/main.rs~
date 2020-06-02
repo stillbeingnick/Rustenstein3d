@@ -175,10 +175,7 @@ fn main() {
                 }
                 
                 let line_height = (D_HEIGHT as f32/distance)as i32;
-                let mut start_pixel = (D_HEIGHT as i32/2) - (line_height/2);
-                if start_pixel > D_HEIGHT as i32 {
-                    start_pixel = 0;
-                }
+                let start_pixel = ((D_HEIGHT as i32/2) - (line_height/2)).abs();
                 let color;
                 if distance <= max_depth/4.0 {
                     color = 255;
