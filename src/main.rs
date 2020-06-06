@@ -2,9 +2,9 @@ use std::f32::consts::PI;
 use minifb::{Key, Window, WindowOptions, ScaleMode, Scale};
 use std::time::SystemTime;
 
-const D_WIDTH: usize = 320;
-const D_HEIGHT: usize = 240;
-const movement_speed: f32 = 0.1;
+const D_WIDTH: usize = 120;
+const D_HEIGHT: usize = 80;
+const movement_speed: f32 = 2.0;
 
 fn main() {
 
@@ -14,6 +14,11 @@ fn main() {
 
     let map: Vec<Vec<&str>> = vec![
     vec!["#","#","#","#","#","#","#","#","#","#"],
+    vec!["#",".",".",".",".",".",".",".",".","#"],
+    vec!["#",".",".",".",".",".",".",".",".","#"],
+    vec!["#",".",".",".",".","#","#","#","#","#"],
+    vec!["#",".",".",".",".",".",".",".",".","#"],
+    vec!["#",".",".",".",".",".",".",".",".","#"],
     vec!["#",".",".",".",".",".",".",".",".","#"],
     vec!["#",".",".",".",".",".",".",".",".","#"],
     vec!["#",".",".",".",".",".",".",".",".","#"],
@@ -26,13 +31,20 @@ fn main() {
     ];
     
 
-    let mut fov: f32 = 90.0;
+    let mut fov: f32 = (PI/2.0).to_degrees();
 
     #[derive(Debug, Copy, Clone)]
     struct FloatVec {
         x: f32,
         y: f32
     }
+    // #[derive(Debug)]
+    // struct Wall {
+    //     start: i32,
+    //     end: i32,
+    //     distance: f32,
+    //     color: u32
+    // }
     #[derive(Debug)]
     struct Ray {
         dir_x: f32,
@@ -55,7 +67,7 @@ fn main() {
         D_HEIGHT,
         WindowOptions{
             resize: true,
-            scale: Scale::X2,
+            scale: Scale::X8,
             ..WindowOptions::default()
         },
     )
@@ -63,7 +75,7 @@ fn main() {
         panic!("{}", e);
     });
     // Limit to max ~60 fps update rate
-    window.limit_update_rate(Some(std::time::Duration::from_micros(16600)));
+    // window.limit_update_rate(Some(std::time::Duration::from_micros(16600)));
 
 
     let mut frame_time = 0.0;
@@ -73,28 +85,30 @@ fn main() {
     while window.is_open() && !window.is_key_down(Key::Escape) {
         let rad:f32 = 0.1;
 
-        
-        // let frame_start = SystemTime::now();
+        let mut avg_wall_start = 0;
 
-        for b in 0..D_HEIGHT/2 {
-            for g in 0..D_WIDTH{
-                buffer[(b*D_WIDTH)+g] = (D_HEIGHT as u32/2)-b as u32;
-                buffer[((D_HEIGHT-b-1)*D_WIDTH)+g] = (D_HEIGHT as u32/2)-b as u32;
+        
+        let frame_start = SystemTime::now();
 
-            }
-        }
+        // for b in 0..D_HEIGHT/2 {
+        //     for g in 0..D_WIDTH{
+        //         buffer[(b*D_WIDTH)+g] = (D_HEIGHT as u32/2)-b as u32;
+        //         buffer[((D_HEIGHT-b-1)*D_WIDTH)+g] = (D_HEIGHT as u32/2)-b as u32;
+
+        //     }
+        // }
         
         
 
-        // buffer = vec![0; D_WIDTH * D_HEIGHT];
+        buffer = vec![0; D_WIDTH * D_HEIGHT];
         
 
         // let rot_speed: f32 = frame_time*-0.5;
         // let move_speed: f32 = frame_time*0.10;
 
         let player_mov = FloatVec {
-            x: player.angle.sin()*movement_speed,
-            y: player.angle.cos()*movement_speed
+            x: player.angle.sin()*movement_speed*frame_time,
+            y: player.angle.cos()*movement_speed*frame_time
         };
         if window.is_key_down(Key::W) { 
            if map[(player.y + player_mov.y)as usize][(player.x + player_mov.x) as usize] != "#" { 
@@ -102,16 +116,16 @@ fn main() {
                 player.y += player_mov.y;
            }
         }
-        if window.is_key_down(Key::S) {
-           if map[(player.y - 0.1)as usize][(player.x - 0.1) as usize] != "#" { 
-                player.x -= 0.1;
-                player.y -= 0.1;
-           }
-        }
+        if window.is_key_down(Key::S) { 
+            if map[(player.y - player_mov.y)as usize][(player.x - player_mov.x) as usize] != "#" { 
+                 player.x -= player_mov.x;
+                 player.y -= player_mov.y;
+            }
+         }
          
         if window.is_key_down(Key::Right){
 
-        player.angle += 0.1;
+        player.angle += movement_speed*frame_time;
 
 
         let sin = rad.sin();
@@ -124,7 +138,7 @@ fn main() {
 
         }
         if window.is_key_down(Key::Left){
-            player.angle -= 0.1;
+            player.angle -= movement_speed*frame_time;
             
             let sin = rad.sin();
             let cos = rad.cos();
@@ -140,7 +154,6 @@ fn main() {
             
             let mut step_size = 0.0;
             let current_rad = (player.angle-fov.to_radians()/2.0) + (x as f32/D_WIDTH as f32)*fov.to_radians();
-
             let ray = Ray{
                 dir_x: current_rad.sin(),
                 dir_y: current_rad.cos()
@@ -157,28 +170,53 @@ fn main() {
                 current_point.x = player.x + ray.dir_x*step_size;
                 current_point.y = player.y + ray.dir_y*step_size;
                 if map[current_point.y as usize][current_point.x as usize] == "#" {hit = true}
+                if current_point.x > max_depth || current_point.y > max_depth{
+                    break;
+                }
 
-                //current point - direction difference = player point + difference from center
-                
+                // println!("{:?}", opp_ray);                
             }
 
             if hit == true {
 
                 //let distance = ((player.x - current_point.x).powf(2.0) + (player.y+current_point.y).powf(2.0)).sqrt();
-                let mut distance = step_size;
+                // let mut distance = step_size;
+                let mut distance;
+                let mut distance_x = (current_point.x - player.x + (0.1 + step_size) / 2.0) / ray.dir_x;
+                let mut distance_y = (current_point.y - player.y + (0.1 + step_size) / 2.0) / ray.dir_y;
+
+                
+                if distance_x < distance_y && distance_x > 0.0{
+                    distance = distance_x;
+                }else if distance_y > 0.0{
+                    distance = distance_y
+                }else{
+                    distance = 0.0;
+                }
+
+                println!("{}" , distance);
                 
 
-                if (distance) <= 0.0 {
+                if distance <= 0.0 {
                     distance = 0.0;
                 }else if distance >= max_depth {
                     distance = max_depth;
                 }
                 
-                let line_height = (D_HEIGHT as f32/distance)as i32;
-                let mut start_pixel = (D_HEIGHT as i32/2) - (line_height/2);
-                if start_pixel > D_HEIGHT as i32 {
-                    start_pixel = 0;
+                // let mut line_height = (D_HEIGHT as f32/distance)as i32;
+                let mut wall_start = ((D_HEIGHT as f32/2.0) - (D_HEIGHT as f32/distance)) as i32;
+                let mut wall_end = (D_HEIGHT as i32/2) + (D_HEIGHT as f32/distance) as i32;
+
+                if wall_start <= 0 {
+                    wall_start = 0;
                 }
+
+                if wall_end > D_HEIGHT as i32 {
+                    wall_end = D_HEIGHT as i32;
+                }else if wall_end < 0 {
+                    wall_end = 0;
+                }
+
                 let color;
                 if distance <= max_depth/4.0 {
                     color = 255;
@@ -191,14 +229,30 @@ fn main() {
                 }else{
                     color = 0;
                 }
+                // if x % 3 == 0 {
+                //     if x > 0 {
+                //         avg_wall_start += wall_start;
+                //         avg_wall_start = avg_wall_start/2 as i32;
+                //     }
+                // }
+                // if avg_wall_start - wall_start > 19 || avg_wall_start - wall_start < -19 {
+                //     avg_wall_start = wall_start;
+                // }
+
+                // if line_height > 0 {
+                //     // println!("{} {}",line_height, distance);
+                // }
+                // println!("{} {}", avg_wall_start-wall_start, wall_end);
+                for y in 0..D_HEIGHT {
+                    let pixel_to_draw: usize;
+                    if wall_start <= y as i32 && wall_end >= y as i32 {
+                        pixel_to_draw = y*D_WIDTH + x;
+                        buffer[pixel_to_draw] = color;        
+
+                    }
+                }
+
                 
-                for j in 0..line_height as usize {
-                    let pixel_to_draw = (start_pixel as usize + j) * D_WIDTH + x;
-                    buffer[pixel_to_draw] = color;        
-                }
-                if line_height > 0 {
-                    //println!("{} {}",start_pixel, distance);
-                }
             }
 
          
@@ -232,8 +286,10 @@ fn main() {
         window
             .update_with_buffer(&buffer, D_WIDTH, D_HEIGHT)
             .unwrap();
-        // let frame_end = SystemTime::now();
-        // frame_time = (frame_end.duration_since(frame_start).unwrap().as_millis())as f32/100.0;
+        window.set_title(&format!("{}",1.0/frame_time));
+        let frame_end = SystemTime::now();
+        frame_time = (frame_end.duration_since(frame_start).unwrap().as_millis())as f32/1000.0;
+        // println!("fps: {}", frame_time);
     }
 
 }
