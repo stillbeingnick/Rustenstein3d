@@ -2,8 +2,8 @@ use std::f32::consts::PI;
 use minifb::{Key, Window, WindowOptions, ScaleMode, Scale};
 use std::time::SystemTime;
 
-const D_WIDTH: usize = 120;
-const D_HEIGHT: usize = 80;
+const D_WIDTH: usize = 1024;
+const D_HEIGHT: usize = 768;
 const movement_speed: f32 = 2.0;
 
 fn main() {
@@ -31,7 +31,7 @@ fn main() {
     ];
     
 
-    let mut fov: f32 = (PI/2.0).to_degrees();
+    let mut fov: f32 = (PI/4.0).to_degrees();
 
     #[derive(Debug, Copy, Clone)]
     struct FloatVec {
@@ -67,7 +67,7 @@ fn main() {
         D_HEIGHT,
         WindowOptions{
             resize: true,
-            scale: Scale::X8,
+            scale: Scale::X1,
             ..WindowOptions::default()
         },
     )
@@ -180,22 +180,10 @@ fn main() {
             if hit == true {
 
                 //let distance = ((player.x - current_point.x).powf(2.0) + (player.y+current_point.y).powf(2.0)).sqrt();
-                // let mut distance = step_size;
-                let mut distance;
-                let mut distance_x = (current_point.x - player.x + (0.1 + step_size) / 2.0) / ray.dir_x;
-                let mut distance_y = (current_point.y - player.y + (0.1 + step_size) / 2.0) / ray.dir_y;
+                let mut distance = step_size;
+                // let mut distance = (step_size*current_rad.cos().abs());
 
-                
-                if distance_x < distance_y && distance_x > 0.0{
-                    distance = distance_x;
-                }else if distance_y > 0.0{
-                    distance = distance_y
-                }else{
-                    distance = 0.0;
-                }
-
-                println!("{}" , distance);
-                
+                // println!("{}", distance);
 
                 if distance <= 0.0 {
                     distance = 0.0;
@@ -203,9 +191,10 @@ fn main() {
                     distance = max_depth;
                 }
                 
-                // let mut line_height = (D_HEIGHT as f32/distance)as i32;
-                let mut wall_start = ((D_HEIGHT as f32/2.0) - (D_HEIGHT as f32/distance)) as i32;
-                let mut wall_end = (D_HEIGHT as i32/2) + (D_HEIGHT as f32/distance) as i32;
+                let line_height = (D_HEIGHT as f32/distance)as i32;
+                let mut wall_end = (D_HEIGHT as i32/2) + (line_height as i32 /2) as i32;
+                let mut wall_start = wall_end - line_height as i32;
+
 
                 if wall_start <= 0 {
                     wall_start = 0;
