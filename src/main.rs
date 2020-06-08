@@ -2,8 +2,8 @@ use std::f64::consts::PI;
 use minifb::{Key, Window, WindowOptions, Scale};
 use std::time::SystemTime;
 
-const D_WIDTH: usize = 1024;
-const D_HEIGHT: usize = 768;
+const D_WIDTH: usize = 1920;
+const D_HEIGHT: usize = 1080;
 const MOVEMENT_SPEED: f64 = 2.0;
 
 fn main() {
@@ -73,7 +73,7 @@ fn main() {
     
     let mut frame_time = 0.0;
 
-    let mut focal_length: f64 = 0.4;
+    let mut focal_length: f64 = 0.8;
 
 
     while window.is_open() && !window.is_key_down(Key::Escape) {  
@@ -159,16 +159,6 @@ fn main() {
                 // let mut distance = (step_size)*(current_rad-player.angle).cos();
                 let mut distance = (step_size)*(current_rad-player.angle).cos();
 
-                
-
-                
-
-                // if distance <= 0.0 {
-                //     distance = 0.0;
-                // }else if distance >= max_depth {
-                //     distance = max_depth;
-                // }
-
 
                 
                 let line_height = D_HEIGHT as f64/distance;
@@ -208,6 +198,10 @@ fn main() {
                     if wall_start <= y as i32 && wall_end >= y as i32 {
                         buffer[pixel_to_draw] = color;        
 
+                    }else if (y as i32) < wall_start {
+                        buffer[pixel_to_draw] = from_u8_rgb(47, 79, 79); 
+                    }else if (y as i32) > wall_end{
+                        buffer[pixel_to_draw] = from_u8_rgb(47, 79, 79); 
                     }
                 }
 
@@ -225,4 +219,8 @@ fn main() {
         frame_time = (frame_end.duration_since(frame_start).unwrap().as_millis())as f64/1000.0;
     }
 
+}
+fn from_u8_rgb(r: u8, g: u8, b: u8) -> u32 {
+    let (r, g, b) = (r as u32, g as u32, b as u32);
+    (r << 16) | (g << 8) | b
 }
