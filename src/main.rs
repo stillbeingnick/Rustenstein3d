@@ -1,10 +1,10 @@
 use std::f32::consts::PI;
-use minifb::{Key, Window, WindowOptions, ScaleMode, Scale};
+use minifb::{Key, Window, WindowOptions, Scale};
 use std::time::SystemTime;
 
 const D_WIDTH: usize = 1024;
 const D_HEIGHT: usize = 768;
-const movement_speed: f32 = 2.0;
+const MOVEMENT_SPEED: f32 = 2.0;
 
 fn main() {
 
@@ -38,24 +38,20 @@ fn main() {
         x: f32,
         y: f32
     }
-    // #[derive(Debug)]
-    // struct Wall {
-    //     start: i32,
-    //     end: i32,
-    //     distance: f32,
-    //     color: u32
-    // }
+
     #[derive(Debug)]
     struct Ray {
         dir_x: f32,
         dir_y: f32
     }
+
     #[derive(Debug, Copy, Clone)]
     struct Player {
         x: f32,
         y: f32,
         angle: f32
     }
+
     let mut player = Player{
         x: 5.0,
         y: 5.0,
@@ -74,96 +70,59 @@ fn main() {
     .unwrap_or_else(|e| {
         panic!("{}", e);
     });
-    // Limit to max ~60 fps update rate
-    // window.limit_update_rate(Some(std::time::Duration::from_micros(16600)));
-
-
+    
     let mut frame_time = 0.0;
 
-    let mut correction: f32 = 0.0;
+    while window.is_open() && !window.is_key_down(Key::Escape) {   
 
-    while window.is_open() && !window.is_key_down(Key::Escape) {
-        let rad:f32 = 0.1;
-
-        let mut avg_wall_start = 0;
-
-        
         let frame_start = SystemTime::now();
-
-        // for b in 0..D_HEIGHT/2 {
-        //     for g in 0..D_WIDTH{
-        //         buffer[(b*D_WIDTH)+g] = (D_HEIGHT as u32/2)-b as u32;
-        //         buffer[((D_HEIGHT-b-1)*D_WIDTH)+g] = (D_HEIGHT as u32/2)-b as u32;
-
-        //     }
-        // }
-        
-        
 
         buffer = vec![0; D_WIDTH * D_HEIGHT];
         
-
-        // let rot_speed: f32 = frame_time*-0.5;
-        // let move_speed: f32 = frame_time*0.10;
-
         let player_mov = FloatVec {
-            x: player.angle.sin()*movement_speed*frame_time,
-            y: player.angle.cos()*movement_speed*frame_time
+            x: player.angle.sin()*MOVEMENT_SPEED*frame_time,
+            y: player.angle.cos()*MOVEMENT_SPEED*frame_time
         };
+        
         if window.is_key_down(Key::W) { 
            if map[(player.y + player_mov.y)as usize][(player.x + player_mov.x) as usize] != "#" { 
                 player.x += player_mov.x;
                 player.y += player_mov.y;
            }
         }
+
         if window.is_key_down(Key::S) { 
             if map[(player.y - player_mov.y)as usize][(player.x - player_mov.x) as usize] != "#" { 
                  player.x -= player_mov.x;
                  player.y -= player_mov.y;
             }
-         }
+        }
          
         if window.is_key_down(Key::Right){
-
-        player.angle += movement_speed*frame_time;
-
-
-        let sin = rad.sin();
-        let cos = rad.cos();
-
-        let old_player = player;
-
-        // player.dir.x = ((old_player.dir.x - 0.0)*cos + (old_player.dir.y - 0.0)*sin)+0.0;
-        // player.dir.y = ((old_player.dir.x - 0.0)*sin - (old_player.dir.y - 0.0)*cos)+0.0;
-
+            player.angle += MOVEMENT_SPEED*frame_time;
         }
+
         if window.is_key_down(Key::Left){
-            player.angle -= movement_speed*frame_time;
-            
-            let sin = rad.sin();
-            let cos = rad.cos();
-            let old_player = player;
-
-            // player.dir.x = ((old_player.dir.x - 0.0)*cos - (old_player.dir.y - 0.0)*sin)+0.0;
-            // player.dir.y = ((old_player.dir.x - 0.0)*sin + (old_player.dir.y - 0.0)*cos)+0.0;
+            player.angle -= MOVEMENT_SPEED*frame_time;
         }
 
-        let fov_step_rad = (fov/D_WIDTH as f32)*PI/180.0;
-        let mut current_rad = 0.1;
         for x in 0..D_WIDTH{ 
             
             let mut step_size = 0.0;
+            
             let current_rad = (player.angle-fov.to_radians()/2.0) + (x as f32/D_WIDTH as f32)*fov.to_radians();
+            
             let ray = Ray{
                 dir_x: current_rad.sin(),
                 dir_y: current_rad.cos()
             };
+
             let mut hit = false;
-            // println!("{}"  , current_rad);
             let mut current_point = FloatVec {
                 x: player.x,
                 y: player.y
             };
+            
             while !hit {
                 step_size += 0.1;
                
@@ -174,16 +133,11 @@ fn main() {
                     break;
                 }
 
-                // println!("{:?}", opp_ray);                
             }
 
             if hit == true {
 
-                //let distance = ((player.x - current_point.x).powf(2.0) + (player.y+current_point.y).powf(2.0)).sqrt();
                 let mut distance = step_size;
-                // let mut distance = (step_size*current_rad.cos().abs());
-
-                // println!("{}", distance);
 
                 if distance <= 0.0 {
                     distance = 0.0;
@@ -218,20 +172,7 @@ fn main() {
                 }else{
                     color = 0;
                 }
-                // if x % 3 == 0 {
-                //     if x > 0 {
-                //         avg_wall_start += wall_start;
-                //         avg_wall_start = avg_wall_start/2 as i32;
-                //     }
-                // }
-                // if avg_wall_start - wall_start > 19 || avg_wall_start - wall_start < -19 {
-                //     avg_wall_start = wall_start;
-                // }
-
-                // if line_height > 0 {
-                //     // println!("{} {}",line_height, distance);
-                // }
-                // println!("{} {}", avg_wall_start-wall_start, wall_end);
+               
                 for y in 0..D_HEIGHT {
                     let pixel_to_draw: usize;
                     if wall_start <= y as i32 && wall_end >= y as i32 {
@@ -247,38 +188,12 @@ fn main() {
          
         }
 
-        
-        
-        // println!("{:?}", player.dir);
-
-
-
-
-            
-        
-            
-        //     while !hit {
-
-        //     }
-                
-        //     for i in 0..line_height as usize {
-        //         if line_height as usize > 0 {
-        //             let pixel_to_draw = (start_pixel as usize+i)*(D_WIDTH) + x ;
-        //             if pixel_to_draw > 0 && pixel_to_draw < (D_HEIGHT*D_WIDTH){
-        //                 // println!("{}", pixel_to_draw);
-        //                 buffer[pixel_to_draw as usize] = 255;
-        //             }
-        //         }
-        // }
-        // We unwrap here as we want this code to exit if it fails. 
-        // Real applications may want to handle this in a different way
         window
             .update_with_buffer(&buffer, D_WIDTH, D_HEIGHT)
             .unwrap();
         window.set_title(&format!("{}",1.0/frame_time));
         let frame_end = SystemTime::now();
         frame_time = (frame_end.duration_since(frame_start).unwrap().as_millis())as f32/1000.0;
-        // println!("fps: {}", frame_time);
     }
 
 }
