@@ -31,7 +31,7 @@ fn main() {
     ];
     
 
-    let mut fov: f64 = (PI/2.0).to_degrees();
+    let mut fov: f64 = 66.0_f64.to_radians();
 
     #[derive(Debug, Copy, Clone)]
     struct FloatVec {
@@ -73,7 +73,12 @@ fn main() {
     
     let mut frame_time = 0.0;
 
-    while window.is_open() && !window.is_key_down(Key::Escape) {   
+    let mut focal_length: f64 = 0.4;
+
+
+    while window.is_open() && !window.is_key_down(Key::Escape) {  
+        
+        
 
         let frame_start = SystemTime::now();
 
@@ -83,6 +88,14 @@ fn main() {
             x: player.angle.sin()*MOVEMENT_SPEED*frame_time,
             y: player.angle.cos()*MOVEMENT_SPEED*frame_time
         };
+
+        if window.is_key_down(Key::Q) { 
+            focal_length+=0.01*frame_time;
+
+         }
+         if window.is_key_down(Key::E) { 
+           focal_length-=0.01*frame_time;
+         }
         
         if window.is_key_down(Key::W) { 
            if map[(player.y + player_mov.y)as usize][(player.x + player_mov.x) as usize] != "#" { 
@@ -100,19 +113,19 @@ fn main() {
          
         if window.is_key_down(Key::Right){
             player.angle -= MOVEMENT_SPEED*frame_time;
+           
         }
 
         if window.is_key_down(Key::Left){
             player.angle += MOVEMENT_SPEED*frame_time;
         }
 
-        let focal_length: f64 = 0.9;
 
         for x in 0..D_WIDTH{ 
             
             let mut step_size = 0.0;
             
-            //let current_rad = (player.angle-fov.to_radians()/2.0) + (x as f64/D_WIDTH as f64)*fov.to_radians();
+            // let current_rad = (player.angle-fov/2.0) + (x as f64/D_WIDTH as f64)*fov;
             
             let cam_x = x as f64 / D_WIDTH as f64 - 0.5;
             
@@ -143,7 +156,10 @@ fn main() {
 
             if hit == true {
 
-                let mut distance = step_size*current_rad.cos();
+                // let mut distance = (step_size)*(current_rad-player.angle).cos();
+                let mut distance = (step_size)*(current_rad-player.angle).cos();
+
+                
 
                 
 
@@ -155,11 +171,11 @@ fn main() {
 
 
                 
-                let line_height = (D_HEIGHT as f64/distance)as i32;
+                let line_height = D_HEIGHT as f64/distance;
                 let mut wall_end = (D_HEIGHT as i32/2) + (line_height as i32 /2) as i32;
                 let mut wall_start = wall_end - line_height as i32;
 
-                // println!("{} {} {} {} {}",current_rad.cos(), distance, line_height, wall_start, wall_end);
+                // println!("{} {} {} {} {}",current_rad, distance, line_height, wall_start, wall_end);
 
                 if wall_start <= 0 {
                     wall_start = 0;
@@ -175,22 +191,21 @@ fn main() {
 
 
                 let color;
-                if distance <= max_depth/4.0 {
+                if step_size <= max_depth/4.0 {
                     color = 255;
-                }else if distance < max_depth/3.0 {
+                }else if step_size < max_depth/3.0 {
                     color = 153;
-                }else if distance < max_depth/2.0 {
+                }else if step_size < max_depth/2.0 {
                     color = 102
-                }else if distance < max_depth {
+                }else if step_size < max_depth {
                     color = 51;
                 }else{
                     color = 0;
                 }
                
                 for y in 0..D_HEIGHT {
-                    let pixel_to_draw: usize;
+                    let pixel_to_draw: usize = y*D_WIDTH + x;
                     if wall_start <= y as i32 && wall_end >= y as i32 {
-                        pixel_to_draw = y*D_WIDTH + x;
                         buffer[pixel_to_draw] = color;        
 
                     }
