@@ -1,10 +1,10 @@
-use std::f32::consts::PI;
+use std::f64::consts::PI;
 use minifb::{Key, Window, WindowOptions, Scale};
 use std::time::SystemTime;
 
 const D_WIDTH: usize = 1024;
 const D_HEIGHT: usize = 768;
-const MOVEMENT_SPEED: f32 = 2.0;
+const MOVEMENT_SPEED: f64 = 2.0;
 
 fn main() {
 
@@ -31,25 +31,25 @@ fn main() {
     ];
     
 
-    let mut fov: f32 = (PI/4.0).to_degrees();
+    let mut fov: f64 = (PI/2.0).to_degrees();
 
     #[derive(Debug, Copy, Clone)]
     struct FloatVec {
-        x: f32,
-        y: f32
+        x: f64,
+        y: f64
     }
 
     #[derive(Debug)]
     struct Ray {
-        dir_x: f32,
-        dir_y: f32
+        dir_x: f64,
+        dir_y: f64
     }
 
     #[derive(Debug, Copy, Clone)]
     struct Player {
-        x: f32,
-        y: f32,
-        angle: f32
+        x: f64,
+        y: f64,
+        angle: f64
     }
 
     let mut player = Player{
@@ -99,19 +99,25 @@ fn main() {
         }
          
         if window.is_key_down(Key::Right){
-            player.angle += MOVEMENT_SPEED*frame_time;
+            player.angle -= MOVEMENT_SPEED*frame_time;
         }
 
         if window.is_key_down(Key::Left){
-            player.angle -= MOVEMENT_SPEED*frame_time;
+            player.angle += MOVEMENT_SPEED*frame_time;
         }
+
+        let focal_length: f64 = 0.9;
 
         for x in 0..D_WIDTH{ 
             
             let mut step_size = 0.0;
             
-            let current_rad = (player.angle-fov.to_radians()/2.0) + (x as f32/D_WIDTH as f32)*fov.to_radians();
+            //let current_rad = (player.angle-fov.to_radians()/2.0) + (x as f64/D_WIDTH as f64)*fov.to_radians();
             
+            let cam_x = x as f64 / D_WIDTH as f64 - 0.5;
+            
+            let current_rad = player.angle-cam_x.atan2(focal_length);
+
             let ray = Ray{
                 dir_x: current_rad.sin(),
                 dir_y: current_rad.cos()
@@ -137,18 +143,23 @@ fn main() {
 
             if hit == true {
 
-                let mut distance = step_size;
+                let mut distance = step_size*current_rad.cos();
 
-                if distance <= 0.0 {
-                    distance = 0.0;
-                }else if distance >= max_depth {
-                    distance = max_depth;
-                }
                 
-                let line_height = (D_HEIGHT as f32/distance)as i32;
+
+                // if distance <= 0.0 {
+                //     distance = 0.0;
+                // }else if distance >= max_depth {
+                //     distance = max_depth;
+                // }
+
+
+                
+                let line_height = (D_HEIGHT as f64/distance)as i32;
                 let mut wall_end = (D_HEIGHT as i32/2) + (line_height as i32 /2) as i32;
                 let mut wall_start = wall_end - line_height as i32;
 
+                // println!("{} {} {} {} {}",current_rad.cos(), distance, line_height, wall_start, wall_end);
 
                 if wall_start <= 0 {
                     wall_start = 0;
@@ -159,6 +170,9 @@ fn main() {
                 }else if wall_end < 0 {
                     wall_end = 0;
                 }
+
+                
+
 
                 let color;
                 if distance <= max_depth/4.0 {
@@ -193,7 +207,7 @@ fn main() {
             .unwrap();
         window.set_title(&format!("{}",1.0/frame_time));
         let frame_end = SystemTime::now();
-        frame_time = (frame_end.duration_since(frame_start).unwrap().as_millis())as f32/1000.0;
+        frame_time = (frame_end.duration_since(frame_start).unwrap().as_millis())as f64/1000.0;
     }
 
 }
