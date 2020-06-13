@@ -153,17 +153,17 @@ fn main() {
                 if current_point.x.fract() == 0.0 {
                     x_dist = 1.0;
                 }else if ray.dir_x > 0.0_f64 {
-                    x_dist = current_point.x - current_point.x.ceil();
+                    x_dist = current_point.x.ceil() - current_point.x;
                 }else{
-                    x_dist = current_point.x + current_point.x.floor();
+                    x_dist = current_point.x - current_point.x.floor();
                 }
 
                 if current_point.y.fract() == 0.0 {
                     y_dist = 1.0;
                 }else if ray.dir_y > 0.0_f64 {
-                    y_dist = current_point.y - current_point.y.ceil();
+                    y_dist = current_point.y.ceil() - current_point.y ;
                 }else{
-                    y_dist = current_point.y + current_point.y.floor();
+                    y_dist = current_point.y - current_point.y.floor();
                 }
 
                 if x_dist < y_dist {
@@ -187,18 +187,18 @@ fn main() {
                
                 // current_point.x = player.x + ray.dir_x*step_size;
                 // current_point.y = player.y + ray.dir_y*step_size;
-                if current_point.x > max_depth || current_point.y > max_depth 
+                if current_point.x > map[1].len() as f64 || current_point.y > map.len() as f64 
                 || current_point.y < 0.0_f64 || current_point.x < 0.0_f64{
                     step_size = max_depth;
                     break;
                 }
                 if map[current_point.y as usize][current_point.x as usize] == "#" {
                     hit = true;
-                    step_size = ((current_point.x-player.x).powf(2.0)+(current_point.y-player.x).powf(2.0)).sqrt();
+                    step_size = ((current_point.x-player.x).powf(2.0)+(current_point.y-player.y).powf(2.0)).sqrt();
 
                 }
                 
-                // println!("{} {}", current_point.x, current_point.y);
+                println!("{} {}", current_point.x, current_point.y);
 
 
             }
@@ -212,7 +212,7 @@ fn main() {
                 let mut wall_end = (D_HEIGHT as i32/2) + (line_height as i32 /2) as i32;
                 let mut wall_start = wall_end - line_height as i32;
 
-                // println!("{} {} {} {} {}",current_rad, distance, line_height, wall_start, wall_end);
+                // println!("{} {} {} {}", distance, line_height, wall_start, wall_end);
 
                 if wall_start <= 0 {
                     wall_start = 0;
