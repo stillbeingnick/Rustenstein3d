@@ -63,7 +63,7 @@ fn main() {
         D_HEIGHT,
         WindowOptions{
             resize: true,
-            scale: Scale::X1,
+            scale: Scale::X2,
             ..WindowOptions::default()
         },
     )
@@ -123,7 +123,8 @@ fn main() {
 
         for x in 0..D_WIDTH{ 
             
-            let mut step_size = 0.0;
+            let mut step_size = 0.1;
+            let mut wall_dist = 0.0;
             
             // let current_rad = (player.angle-fov/2.0) + (x as f64/D_WIDTH as f64)*fov;
             
@@ -143,70 +144,52 @@ fn main() {
             };
 
             while !hit {
-                let x_dist: f64;
-                let y_dist: f64;
 
-                let x_dist_tan: f64;
-                let y_dist_tan: f64;
-
-
-                if current_point.x.fract() == 0.0 {
-                    x_dist = 1.0;
-                }else if ray.dir_x > 0.0_f64 {
-                    x_dist = current_point.x.ceil() - current_point.x;
-                }else{
-                    x_dist = current_point.x - current_point.x.floor();
-                }
-
-                if current_point.y.fract() == 0.0 {
-                    y_dist = 1.0;
-                }else if ray.dir_y > 0.0_f64 {
-                    y_dist = current_point.y.ceil() - current_point.y ;
-                }else{
-                    y_dist = current_point.y - current_point.y.floor();
-                }
-
-                if x_dist < y_dist {
-                    current_point.x += x_dist;
-                    current_point.y += x_dist*current_rad.tan();
-                    // step_size += (x_dist).powf(2.0)+(y_dist*current_rad.tan()).powf(2.0);
-
-                }else{
-                    current_point.x += y_dist*current_rad.tan();
-                    current_point.y += y_dist;
-                    // step_size += (y_dist*current_rad.tan()).powf(2.0)+(y_dist).powf(2.0);
-                }
                 
-                // x_dist_tan = x_dist*current_rad.tan();
-                // y_dist_tan = y_dist/current_rad.tan();
-
-                //hyptonese
-                // step_size += 0.01;
-
-                let old_point = current_point;
+                current_point.x += step_size*ray.dir_x;
+                current_point.y += step_size*ray.dir_y;
                
-                // current_point.x = player.x + ray.dir_x*step_size;
-                // current_point.y = player.y + ray.dir_y*step_size;
+
+                
+
+
+                // if ray.dir_y.is_sign_positive() {
+                //     current_point.y += step_size*current_rad.tan();
+                // }else{
+                //     current_point.y -= step_size*current_rad.tan().abs();
+                // }
+                
+
+                
+               
+               
                 if current_point.x > map[1].len() as f64 || current_point.y > map.len() as f64 
-                || current_point.y < 0.0_f64 || current_point.x < 0.0_f64{
+                || current_point.y < -0.0_f64 || current_point.x < -0.0_f64{
+                    hit = true;
                     step_size = max_depth;
                     break;
                 }
                 if map[current_point.y as usize][current_point.x as usize] == "#" {
                     hit = true;
-                    step_size = ((current_point.x-player.x).powf(2.0)+(current_point.y-player.y).powf(2.0)).sqrt();
+                    let offest_y = current_point.y.fract()*ray.dir_y;
+                    let offest_x = current_point.x.fract()*ray.dir_x;
+                    wall_dist = ((player.x-current_point.x-offest_x).powf(2.0)+(player.y-current_point.y-offest_y).powf(2.0)).sqrt();
+
 
                 }
                 
-                println!("{} {}", current_point.x, current_point.y);
+                // println!("{} {} {} {} {} {}", current_point.x, ray.dir_x, x_dist,current_point.y, ray.dir_y,y_dist);
+                // println!("{} {}", current_point.x,current_point.y);
+
+                // step_size += 0.1;
 
 
             }
 
             if hit == true {
 
-                // let mut distance = (step_size)*(current_rad-player.angle).cos();
-                let mut distance = (step_size);
+                let mut distance = (wall_dist)*(current_rad-player.angle).cos();
+                // let mut distance = (wall_dist);
 
                 let line_height = D_HEIGHT as f64/distance;
                 let mut wall_end = (D_HEIGHT as i32/2) + (line_height as i32 /2) as i32;
@@ -225,13 +208,13 @@ fn main() {
                 }
 
                 let color;
-                if step_size <= max_depth/4.0 {
+                if wall_dist <= max_depth/4.0 {
                     color = 255;
-                }else if step_size < max_depth/3.0 {
+                }else if wall_dist < max_depth/3.0 {
                     color = 153;
-                }else if step_size < max_depth/2.0 {
+                }else if wall_dist < max_depth/2.0 {
                     color = 102
-                }else if step_size < max_depth {
+                }else if wall_dist < max_depth {
                     color = 51;
                 }else{
                     color = 0;
