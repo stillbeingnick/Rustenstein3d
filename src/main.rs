@@ -6,6 +6,18 @@ const D_WIDTH: usize = 640;
 const D_HEIGHT: usize = 320;
 const MOVEMENT_SPEED: f64 = 2.0;
 
+#[derive(Debug, Copy, Clone)]
+struct FloatVec {
+    x: f64,
+    y: f64
+}
+#[derive(Debug, Copy, Clone)]
+struct FloatVec2 {
+    x: f64,
+    y: f64,
+    length: f64
+}
+
 fn main() {
 
     let mut buffer: Vec<u32> = vec![0; D_WIDTH * D_HEIGHT];
@@ -32,12 +44,6 @@ fn main() {
     
 
     let mut fov: f64 = 66.0_f64.to_radians();
-
-    #[derive(Debug, Copy, Clone)]
-    struct FloatVec {
-        x: f64,
-        y: f64
-    }
 
     #[derive(Debug)]
     struct Ray {
@@ -143,69 +149,10 @@ fn main() {
                 y: player.y
             };
 
-            let mut ray_loop = 0;
-            while !hit && ray_loop < 100 {
+            while !hit {
 
-                
-                let step_x;
-                let step_y;
-
-                let x_dist;
-                let y_dist;
-
-                if ray.dir_x.is_sign_positive() {
-                    if current_point.x.fract().abs() == 0.0{
-                        x_dist = 1.0;  
-                    }else{
-                        x_dist = (current_point.x.fract() - 1.0).abs();  
-                    }
-                }else{
-                    if current_point.x.fract().abs() == 0.0{
-                        x_dist = -1.0;  
-                    }else{
-                        x_dist = -current_point.x.fract();  
-                    }
-                }
-                if ray.dir_y.is_sign_positive() {
-                    if current_point.y.fract().abs() == 0.0{
-                        y_dist = 1.0;  
-                    }else{
-                        y_dist = (current_point.y.fract() - 1.0).abs();  
-                    }
-                }else{
-                    if current_point.y.fract().abs() == 0.0{
-                        y_dist = -1.0;  
-                    }else{
-                        y_dist = -current_point.y.fract();  
-                    }
-                }
-
-                step_x = x_dist*(ray.dir_y/ray.dir_x);
-                step_y = y_dist*(ray.dir_x/ray.dir_y);
-
-                if step_x.abs() < step_y.abs() {
-                    current_point.x += x_dist;
-                    current_point.y += step_x;
-                    wall_dist += x_dist.powf(2.0) + step_x.powf(2.0)
-                }else{
-                    current_point.x += step_y;
-                    current_point.y += y_dist;
-                    wall_dist += y_dist.powf(2.0) + step_y.powf(2.0)
-
-                }
-
-                
-                
-                
-
-                
-
-
-                
-
-                
-                // println!("{} {}", current_point.x,current_point.y);
-                // println!("{} {} {} {} {} {}", current_point.x, ray.dir_x, x_dist,current_point.y, ray.dir_y,y_dist);
+                current_point.x += ray.dir_x*step_size;
+                current_point.y += ray.dir_y*step_size;
 
                
                
@@ -217,19 +164,15 @@ fn main() {
                 }
                 if map[current_point.y as usize][current_point.x as usize] == "#" {
                     hit = true;
-                    // wall_dist = ((player.x-current_point.x).powf(2.0)+(player.y-current_point.y).powf(2.0)).sqrt();
+                    wall_dist = ((player.x-current_point.x).powf(2.0)+(player.y-current_point.y).powf(2.0)).sqrt();
                 }
                 
-
-                // step_size += 0.1;
-
-                ray_loop+=1;
             }
 
             if hit == true {
 
-                // let mut distance = (wall_dist)*(current_rad-player.angle).cos();
-                let mut distance = (wall_dist);
+                let mut distance = (wall_dist)*(current_rad-player.angle).cos();
+                // let mut distance = (wall_dist);
 
                 let line_height = D_HEIGHT as f64/distance;
                 let mut wall_end = (D_HEIGHT as i32/2) + (line_height as i32 /2) as i32;
